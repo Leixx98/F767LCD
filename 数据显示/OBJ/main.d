@@ -104,3 +104,4 @@
 ..\obj\main.o: ..\HARDWARE\PCF8574\pcf8574.h
 ..\obj\main.o: ..\HARDWARE\IIC\myiic.h
 ..\obj\main.o: ..\HARDWARE\DMA\dma.h
+..\obj\main.o: ..\HARDWARE\TIMER\timer.h

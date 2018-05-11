@@ -20,6 +20,7 @@
 #include "beep.h"
 #include "pcf8574.h"
 #include "dma.h"
+#include "timer.h"
 /************************************************
  ALIENTEK °¢²¨ÂÞSTM32F7¿ª·¢°å ÊµÑé43
  ºº×ÖÏÔÊ¾ÊµÑé-HAL¿âº¯Êý°æ
@@ -33,6 +34,7 @@
 extern const u8 Ref_Buffer[2048];
 extern const uint16_t Sine12bit2[256];
 extern u8 callbuf[33]; 
+u8 SendBuff[4500];//·¢ËÍÊý¾Ý»º³åÇø
 u16 LCDout1[450];//Êý¾ÝÊä³ö»º³åÆ÷1
 u16 LCDout2[450];//Êý¾ÝÊä³ö»º³åÆ÷2
 u16 ADCin[4096];//Êý¾Ý²É¼¯»º³åÆ÷
@@ -45,6 +47,7 @@ u8 LCDnew_sta=0,LCDpin_sta=0,LCD_n=0,Tlock_sta=0,aT_sta=0;//LCDË¢ÐÂ±êÖ¾£¬ÐÅºÅÏÔÊ
 u8 LCDDCAC_sta=0,LCDDIS_sta=0,LCDone=0,LCD_run=0; //0=DCÏÔÊ¾£¬1=ACÏÔÊ¾//µ¥´Î//0=Ö´ÐÐ£¬1=Í£Ö¹
 u8 time_1s_bz=0,TIMd=0,Volt=3,Ymax=36,Ymid=18,Ymin=0;
 u8 UpdatTrue,DAC_new=1;
+u8 Show_Flag;
 const u16 ADCx[12]={1,2,5,10,20,50,100,200,500,1000,2000,5000};//Ê±¼ä×ø±ê±¶ÂÊ£¨us£©
 u16 DACin[256];
 u8 KEY_VALUE,CONTEST,MEASURE,TYPE;
@@ -53,12 +56,12 @@ int main(void)
 {
     u8 key,mode1,mode2;
 	u8 *p;
-    u8 SendBuff1[200],SendBuff2[200]; //·¢ËÍÊý¾Ý»º³åÇø
-	u16 aK,bK,cK,dK,eK=0,i,j,temp;
+	u16 aK,bK,cK,dK,eK=0,i,j,temp,xPoint=223;
      u16 t,k,cY1=0,cY2=0;
+    u32 ECG_Value1,ECG_Value2;
+    int ECG_Show1,ECG_Show2;
      float freq=0,cycle=0,phase=0,scope=0,freqout=0,scopeout=0;//²ÎÊý
 	 p=callbuf;	
-    u32 ECG_Value1,ECG_Value2;
     
     Cache_Enable();                 //´ò¿ªL1-Cache
     MPU_Memory_Protection();        //±£»¤Ïà¹Ø´æ´¢ÇøÓò
@@ -66,12 +69,13 @@ int main(void)
     Stm32_Clock_Init(432,25,2,9);   //ÉèÖÃÊ±ÖÓ,216Mhz 
     delay_init(216);                //ÑÓÊ±³õÊ¼»¯
 	uart_init(115200);		        //´®¿Ú³õÊ¼»¯
+    HAL_UART_Receive_IT(&UART1_Handler, (u8*)SendBuff, 400);
     LED_Init();                     //³õÊ¼»¯LED
     KEY_Init();                     //³õÊ¼»¯°´¼ü
     SDRAM_Init();                   //³õÊ¼»¯SDRAM
     LCD_Init();                     //³õÊ¼»¯LCD
     Beep_Init();                    //·äÃùÆ÷³õÊ¼»¯
-    MYDMA_Config(DMA2_Stream5,DMA_CHANNEL_4);//³õÊ¼»¯DMA
+    TIM3_Init(500-1,10800-1);      //¶¨Ê±Æ÷3³õÊ¼»¯£¬¶¨Ê±Æ÷Ê±ÖÓÎª108M£¬·ÖÆµÏµÊýÎª10800-1£¬100ms
 	W25QXX_Init();				    //³õÊ¼»¯W25Q256
     tp_dev.init();				    //´¥ÃþÆÁ³õÊ¼»¯ 
     my_mem_init(SRAMIN);            //³õÊ¼»¯ÄÚ²¿ÄÚ´æ³Ø
@@ -109,51 +113,45 @@ int main(void)
 		LCD_Clear(WHITE);//ÇåÆÁ	       
 	} 
 	Keyboard_Init();
-    HAL_UART_Receive_DMA(&UART1_Handler,SendBuff1,200);//¿ªÆôDMA´«Êä
+    HAL_UART_Receive_IT(&UART1_Handler,(u8*)SendBuff,4000);//¿ªÆôDMA´«Êä
     while(1)
     {
       //  key_check();  
          //Ê¹ÓÃÊý×é1½ÓÊÕÊý¾Ý
-         if(__HAL_DMA_GET_FLAG(&UART1RxDMA_Handler,DMA_FLAG_TCIF1_5))//µÈ´ýDMA2_Steam7´«ÊäÍê³É
-        {
-            __HAL_DMA_CLEAR_FLAG(&UART1RxDMA_Handler,DMA_FLAG_TCIF1_5);//Çå³ýDMA2_Steam7´«ÊäÍê³É±êÖ¾
-            HAL_UART_DMAStop(&UART1_Handler);      //´«ÊäÍê³ÉÒÔºó¹Ø±Õ´®¿ÚDMA
-            HAL_UART_Receive_DMA(&UART1_Handler,SendBuff2,200);//¿ªÆôDMA´«Êä
-        }
         //´¦ÀíÊý¾Ý
-        while(j<200)
+        if(Show_Flag == 1)
         {
-            if(SendBuff1[j++]==0x11)
+            while(j<4000)
             {
-                temp=j;
-                if(SendBuff1[temp+7]==0x01)
+                 j++;
+                if(SendBuff[j]==0x11)
                 {
-                    ECG_Value1=(u32)(SendBuff1[temp+1]<<16) | (u32)(SendBuff1[temp+2]<<8) | (u32)(SendBuff1[temp+3]);
-                    ECG_Value2=(u32)(SendBuff1[temp+4]<<16) | (u32)(SendBuff1[temp+5]<<8) | (u32)(SendBuff1[temp+6]);
+                        temp=j;
+                        ECG_Value1=(u32)(SendBuff[temp+1]<<16) | (u32)(SendBuff[temp+2]<<8) | (u32)(SendBuff[temp+3]);
+                        ECG_Show1=(u8)(ECG_Value1/5000);
+                        ECG_Value2=(u32)(SendBuff[temp+4]<<16) | (u32)(SendBuff[temp+5]<<8) | (u32)(SendBuff[temp+6]);
+                        ECG_Show2=(u8)(ECG_Value2/5000);                    
+                        POINT_COLOR=LGRAY;
+                        LCD_DrawLine(xPoint,23,xPoint,577);
+                        POINT_COLOR=BLACK;
+                        LCD_DrawPoint(xPoint,ECG_Show1);     
+                        xPoint++;  
+                        if(xPoint==1000) xPoint=223;                    
+                        POINT_COLOR=LGRAY;
+                        LCD_DrawLine(xPoint,23,xPoint,577);
+                        POINT_COLOR=BLACK;
+                        LCD_DrawPoint(xPoint,ECG_Show2);
+                        xPoint++;  
+                        if(xPoint==1000) xPoint=223; 
                 }
             }
-        }
-        j=0;
-        //Ê¹ÓÃÊý×é2½ÓÊÕÊý¾Ý
-       if(__HAL_DMA_GET_FLAG(&UART1RxDMA_Handler,DMA_FLAG_TCIF1_5))//µÈ´ýDMA2_Steam7´«ÊäÍê³É
-        {
-            __HAL_DMA_CLEAR_FLAG(&UART1RxDMA_Handler,DMA_FLAG_TCIF1_5);//Çå³ýDMA2_Steam7´«ÊäÍê³É±êÖ¾
-            HAL_UART_DMAStop(&UART1_Handler);      //´«ÊäÍê³ÉÒÔºó¹Ø±Õ´®¿ÚDMA
-            HAL_UART_Receive_DMA(&UART1_Handler,SendBuff1,200);//¿ªÆôDMA´«Êä
+            j=0;
+            Show_Flag = 0;
+//            __HAL_USART_ENABLE_IT(&UART1_Handler, USART_IT_TC); 
         }
         
-        while(j<200)
-        {
-            if(SendBuff2[j++]==0x11)
-            {
-                temp=j;
-                if(SendBuff2[temp+7]==0x01)
-                {
-                    ECG_Value1=(u32)(SendBuff2[temp+1]<<16) | (u32)(SendBuff2[temp+2]<<8) | (u32)(SendBuff2[temp+3]);
-                    ECG_Value2=(u32)(SendBuff2[temp+4]<<16) | (u32)(SendBuff2[temp+5]<<8) | (u32)(SendBuff2[temp+6]);
-                }
-            }
-        }
+
+
     }
 }
 

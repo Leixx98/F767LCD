@@ -50,7 +50,7 @@
 "..\obj\keyboard.o"
 "..\obj\beep.o"
 "..\obj\pcf8574.o"
-"..\obj\dma.o"
+"..\obj\timer.o"
 "..\obj\malloc.o"
 "..\obj\ff.o"
 "..\obj\diskio.o"

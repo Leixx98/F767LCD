@@ -20,6 +20,9 @@
 ////////////////////////////////////////////////////////////////////////////////// 	  
 //加入以下代码,支持printf函数,而不需要选择use MicroLIB	  
 //#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)	
+extern u8 Show_Flag;
+extern u8 SendBuff[400];//发送数据缓冲区
+
 #if 1
 #pragma import(__use_no_semihosting)             
 //标准库需要的支持函数                 
@@ -98,11 +101,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		GPIO_Initure.Pin=GPIO_PIN_10;			//PA10
 		HAL_GPIO_Init(GPIOA,&GPIO_Initure);	   	//初始化PA10
 		
-#if EN_USART1_RX
-		__HAL_UART_ENABLE_IT(huart,UART_IT_RXNE);		//开启接收中断
 		HAL_NVIC_EnableIRQ(USART1_IRQn);				//使能USART1中断通道
 		HAL_NVIC_SetPriority(USART1_IRQn,3,3);			//抢占优先级3，子优先级3
-#endif	
+
 	}
 
 }
@@ -113,28 +114,6 @@ void USART1_IRQHandler(void)
 #if SYSTEM_SUPPORT_OS	 	//使用OS
 	OSIntEnter();    
 #endif
-	if((__HAL_UART_GET_FLAG(&UART1_Handler,UART_FLAG_RXNE)!=RESET))  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
-	{
-        HAL_UART_Receive(&UART1_Handler,&Res,1,1000); 
-		if((USART_RX_STA&0x8000)==0)//接收未完成
-		{
-			if(USART_RX_STA&0x4000)//接收到了0x0d
-			{
-				if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
-				else USART_RX_STA|=0x8000;	//接收完成了 
-			}
-			else //还没收到0X0D
-			{	
-				if(Res==0x0d)USART_RX_STA|=0x4000;
-				else
-				{
-					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
-					USART_RX_STA++;
-					if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0;//接收数据错误,重新开始接收	  
-				}		 
-			}
-		}   		 
-	}
 	HAL_UART_IRQHandler(&UART1_Handler);	
 #if SYSTEM_SUPPORT_OS	 	//使用OS
 	OSIntExit();  											 
@@ -142,6 +121,27 @@ void USART1_IRQHandler(void)
 } 
 #endif	
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+        if(__HAL_UART_GET_FLAG(&UART1_Handler,UART_FLAG_ORE) != RESET) 
+            {
+                __HAL_UART_CLEAR_OREFLAG(&UART1_Handler);
+            }
+//        if(__HAL_UART_GET_FLAG(&UART1_Handler,UART_FLAG_PE) != RESET) 
+//            {
+//                __HAL_UART_CLEAR_PEFLAG(&UART1_Handler);
+//            }
+//        if(__HAL_UART_GET_FLAG(&UART1_Handler,UART_FLAG_FE) != RESET) 
+//            {
+//                __HAL_UART_CLEAR_FEFLAG(&UART1_Handler);
+//            }            
+//        if(__HAL_UART_GET_FLAG(&UART1_Handler,UART_FLAG_RXNE) != RESET) 
+//            {
+//                __HAL_UART_CLEAR_NEFLAG(&UART1_Handler);
+//            } 
+         __HAL_USART_DISABLE_IT(&UART1_Handler, USART_IT_TC);
+         Show_Flag=1;
+}
 
 /****************************************************************************************/
 /****************************************************************************************/

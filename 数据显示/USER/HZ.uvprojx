@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F767xx,USE_HAL_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F7xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\SDRAM;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SDMMC;..\HARDWARE\NAND;..\HARDWARE\QSPI;..\HARDWARE\W25QXX;..\HARDWARE\MPU;..\USMART;..\MALLOC;..\FATFS\exfuns;..\FATFS\src;..\TEXT;..\HARDWARE\24CXX;..\HARDWARE\IIC;..\HARDWARE\TOUCH;..\HARDWARE\KEYBOARD;..\HARDWARE\BEEP;..\HARDWARE\PCF8574;..\HARDWARE\DMA</IncludePath>
+              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F7xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\SDRAM;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SDMMC;..\HARDWARE\NAND;..\HARDWARE\QSPI;..\HARDWARE\W25QXX;..\HARDWARE\MPU;..\USMART;..\MALLOC;..\FATFS\exfuns;..\FATFS\src;..\TEXT;..\HARDWARE\24CXX;..\HARDWARE\IIC;..\HARDWARE\TOUCH;..\HARDWARE\KEYBOARD;..\HARDWARE\BEEP;..\HARDWARE\PCF8574;..\HARDWARE\DMA;..\HARDWARE\TIMER</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -676,9 +676,9 @@
               <FilePath>..\HARDWARE\PCF8574\pcf8574.c</FilePath>
             </File>
             <File>
-              <FileName>dma.c</FileName>
+              <FileName>timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\DMA\dma.c</FilePath>
+              <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
             </File>
           </Files>
         </Group>

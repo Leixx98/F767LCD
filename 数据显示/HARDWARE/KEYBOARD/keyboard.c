@@ -301,6 +301,8 @@ void key_check(void)
 	u8 *p1,*p2,*p3,i;
 	u8 res;
     static u8 key1_temp,key2_temp,key3_temp,key4_temp;
+    u8 a=0,b=0x19,c=0,d=0,e=0;
+    u8  f=0,g=0,h=0,m=0xca,j=0xc8;
 	p1=callbuf;
 	p2=chr_value;
 	p3=key_value;
@@ -311,9 +313,16 @@ void key_check(void)
         key1_temp=~key1_temp;              //变量取反
         LCD_Fill(22,482,198,558,GRAY);
         if(key1_temp)
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"连接成功！",32,1);
+        }
         else 
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"取消连接！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
     }
     
     else if(KEY_VALUE==2)
@@ -321,9 +330,16 @@ void key_check(void)
         key2_temp=~key2_temp;
         LCD_Fill(22,482,198,558,GRAY);
         if(key2_temp)
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"选择类型！",32,1);
+        }
         else
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"取消测量！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
     }
     
     else if(KEY_VALUE==3) 
@@ -331,9 +347,17 @@ void key_check(void)
         key3_temp=~key3_temp;
         LCD_Fill(22,482,198,558,GRAY);
         if(key3_temp)
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"开始传输ECG！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
         else
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"停止传输ECG！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
     }
     
     else if(KEY_VALUE==4)
@@ -341,9 +365,17 @@ void key_check(void)
        key4_temp=~key4_temp;
         LCD_Fill(22,482,198,558,GRAY);
         if(key4_temp)
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"开始传输PPG！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
         else
+        {
+            POINT_COLOR=LGRAYBLUE; 
             Show_Str(25,490,200,558,"停止传输PPG！",32,1);
+            printf("%c%c%c%c%c%c%c%c%c%c",a,b,c,d,e,f,g,h,m,j);
+        }
     }
 //		if(key) 
 //		{ 
